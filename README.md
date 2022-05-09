@@ -1,6 +1,6 @@
 - 👋 Hi, I’m @andreasxsommer
 - 👀 I’m interested in computer science
-- 📫 feel free to email me: andreas.sommer@protonmail.com :)
+- 📫 feel free to email me: sommer.andreas@protonmail.com :)
 
 <!---
 andreasxsommer/andreasxsommer is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
