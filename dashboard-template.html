@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #4a6fff;
+            --secondary-color: #45aaf2;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .filters {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: white;
+            font-size: 0.9rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #3a5bd9;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: #f1f4f9;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-controls button {
+            padding: 0.4rem 0.8rem;
+            background-color: #f1f4f9;
+            color: #555;
+            border: 1px solid var(--border-color);
+        }
+
+        .pagination-controls button:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #1e1e2e;
+                --card-color: #2d2d40;
+                --text-color: #e0e0e0;
+                --border-color: #3f3f59;
+            }
+
+            .data-table th {
+                background-color: #35354a;
+            }
+
+            .data-table tbody tr:hover {
+                background-color: #35354a;
+            }
+
+            .pagination-controls button {
+                background-color: #35354a;
+                color: #e0e0e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Data Dashboard</h1>
+            <p id="last-updated">Last updated: <span></span></p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="filters">
+            <h2>Filters</h2>
+            <div class="filter-grid" id="filterContainer">
+                <!-- Filters will be dynamically generated here -->
+                <div class="loader">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="actions">
+                <button id="resetFilters" class="btn-secondary">Reset Filters</button>
+                <button id="applyFilters">Apply Filters</button>
+            </div>
+        </div>
+
+        <div class="dashboard" id="dashboardContainer">
+            <!-- Charts will be dynamically generated here -->
+            <div class="loader">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">
+                <div class="card-title">Data Table</div>
+            </div>
+            <div class="table-container">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <!-- Table headers will be dynamically generated -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Table data will be dynamically generated -->
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <div class="pagination-info">Showing <span id="startRow">0</span> to <span id="endRow">0</span> of <span id="totalRows">0</span> entries</div>
+                    <div class="pagination-controls">
+                        <button id="prevPage" disabled>Previous</button>
+                        <button id="nextPage" disabled>Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Dashboard Configuration
+        const config = {
+            pageSize: 10,
+            maxCategories: 8,
+            colorPalette: [
+                '#4a6fff', '#45aaf2', '#2ecc71', '#f39c12', '#e74c3c',
+                '#9b59b6', '#1abc9c', '#34495e', '#fd79a8', '#00cec9'
+            ]
+        };
+
+        // State management
+        let state = {
+            data: [],
+            filteredData: [],
+            columns: [],
+            filters: {},
+            currentPage: 0,
+            dataLoaded: false
+        };
+
+        // DOM elements
+        const elements = {
+            filterContainer: document.getElementById('filterContainer'),
+            dashboardContainer: document.getElementById('dashboardContainer'),
+            dataTable: document.getElementById('dataTable'),
+            resetFilters: document.getElementById('resetFilters'),
+            applyFilters: document.getElementById('applyFilters'),
+            prevPage: document.getElementById('prevPage'),
+            nextPage: document.getElementById('nextPage'),
+            startRow: document.getElementById('startRow'),
+            endRow: document.getElementById('endRow'),
+            totalRows: document.getElementById('totalRows'),
+            lastUpdated: document.querySelector('#last-updated span'),
+            tooltip: document.getElementById('tooltip')
+        };
+
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        async function initialize() {
+            // Set last updated timestamp
+            elements.lastUpdated.textContent = new Date().toLocaleString();
+            
+            try {
+                // Fetch and parse CSV data
+                const data = await fetchCSV('Data.csv');
+                
+                // Process data
+                processData(data);
+                
+                // Generate dashboard UI
+                generateFilters();
+                generateCharts();
+                generateTable();
+                
+                // Set up event listeners
+                setupEventListeners();
+                
+                // Hide loaders
+                hideLoaders();
+                
+                state.dataLoaded = true;
+                
+            } catch (error) {
+                console.error('Failed to initialize dashboard:', error);
+                showErrorMessage('Failed to load data. Please try again later.');
+            }
+        }
+
+        async function fetchCSV(url) {
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+                }
+                
+                const csvText = await response.text();
+                return parseCSV(csvText);
+                
+            } catch (error) {
+                console.error('Error fetching CSV:', error);
+                throw error;
+            }
+        }
+
+        function parseCSV(csvText) {
+            // Split the CSV into rows
+            const rows = csvText.split(/\r?\n/).filter(row => row.trim());
+            
+            // Extract headers
+            const headers = rows[0].split(',').map(header => header.trim());
+            
+            // Parse data rows
+            const data = rows.slice(1).map(row => {
+                const values = row.split(',').map(value => value.trim());
+                
+                // Create an object for this row
+                const rowObject = {};
+                headers.forEach((header, index) => {
+                    const value = values[index];
+                    
+                    // Attempt to convert numeric values
+                    if (!isNaN(value) && value !== '') {
+                        rowObject[header] = parseFloat(value);
+                    } else {
+                        rowObject[header] = value;
+                    }
+                });
+                
+                return rowObject;
+            });
+            
+            return { headers, data };
+        }
+
+        function processData({ headers, data }) {
+            state.data = data;
+            state.filteredData = [...data];
+            state.columns = headers.map(header => {
+                // Determine column type
+                const values = data.map(row => row[header]);
+                const numericValues = values.filter(val => typeof val === 'number');
+                
+                return {
+                    name: header,
+                    type: numericValues.length > 0.7 * data.length ? 'numeric' : 'categorical',
+                    uniqueValues: [...new Set(values)].sort((a, b) => {
+                        if (typeof a === 'number' && typeof b === 'number') {
+                            return a - b;
+                        }
+                        return String(a).localeCompare(String(b));
+                    })
+                };
+            });
+        }
+
+        function generateFilters() {
+            elements.filterContainer.innerHTML = '';
+            
+            state.columns.forEach(column => {
+                const filterGroup = document.createElement('div');
+                filterGroup.className = 'filter-group';
+                
+                const label = document.createElement('label');
+                label.textContent = column.name;
+                filterGroup.appendChild(label);
+                
+                if (column.type === 'categorical' && column.uniqueValues.length <= 20) {
+                    // Create select dropdown for categorical data
+                    const select = document.createElement('select');
+                    select.id = `filter-${column.name}`;
+                    
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'All';
+                    select.appendChild(defaultOption);
+                    
+                    // Add options for each unique value
+                    column.uniqueValues.forEach(value => {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = value;
+                        select.appendChild(option);
+                    });
+                    
+                    filterGroup.appendChild(select);
+                    
+                } else if (column.type === 'numeric') {
+                    // Create min/max inputs for numeric data
+                    const rangeContainer = document.createElement('div');
+                    rangeContainer.style.display = 'flex';
+                    rangeContainer.style.gap = '0.5rem';
+                    
+                    const minInput = document.createElement('input');
+                    minInput.type = 'number';
+                    minInput.id = `filter-${column.name}-min`;
+                    minInput.placeholder = 'Min';
+                    minInput.step = 'any';
+                    
+                    const maxInput = document.createElement('input');
+                    maxInput.type = 'number';
+                    maxInput.id = `filter-${column.name}-max`;
+                    maxInput.placeholder = 'Max';
+                    maxInput.step = 'any';
+                    
+                    rangeContainer.appendChild(minInput);
+                    rangeContainer.appendChild(maxInput);
+                    filterGroup.appendChild(rangeContainer);
+                }
+                
+                elements.filterContainer.appendChild(filterGroup);
+            });
+        }
+
+        function generateCharts() {
+            elements.dashboardContainer.innerHTML = '';
+            
+            // 1. Create summary statistics card
+            createSummaryCard();
+            
+            // 2. Identify columns to visualize
+            const numericColumns = state.columns.filter(col => col.type === 'numeric');
+            const categoricalColumns = state.columns.filter(col => col.type === 'categorical' && col.uniqueValues.length <= config.maxCategories);
+            
+            // 3. Create charts based on data types
+            
+            // Bar chart for categorical data distribution
+            if (categoricalColumns.length > 0) {
+                const categoryColumn = categoricalColumns[0];
+                createBarChart(categoryColumn.name);
+            }
+            
+            // Line charts for numeric columns
+            numericColumns.slice(0, 3).forEach(column => {
+                createLineChart(column.name);
+            });
+            
+            // Pie chart if we have categorical data
+            if (categoricalColumns.length > 0) {
+                const categoryColumn = categoricalColumns[0];
+                createPieChart(categoryColumn.name);
+            }
+            
+            // Correlation matrix if we have multiple numeric columns
+            if (numericColumns.length > 1) {
+                createCorrelationMatrix(numericColumns.map(col => col.name));
+            }
+        }
+
+        function createSummaryCard() {
+            // Create summary statistics for numeric columns
+            const numericColumns = state.columns.filter(col => col.type === 'numeric');
+            
+            if (numericColumns.length === 0) return;
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = 'Summary Statistics';
+            
+            cardHeader.appendChild(cardTitle);
+            card.appendChild(cardHeader);
+            
+            const statsContainer = document.createElement('div');
+            statsContainer.style.display = 'grid';
+            statsContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(120px, 1fr))';
+            statsContainer.style.gap = '1rem';
+            
+            numericColumns.slice(0, 4).forEach(column => {
+                const values = state.filteredData.map(row => row[column.name]).filter(val => !isNaN(val));
+                
+                if (values.length === 0) return;
+                
+                const stats = calculateStats(values);
+                
+                const statGroup = document.createElement('div');
+                
+                const statTitle = document.createElement('div');
+                statTitle.style.fontWeight = 'bold';
+                statTitle.style.fontSize = '0.9rem';
+                statTitle.style.marginBottom = '0.5rem';
+                statTitle.textContent = column.name;
+                
+                const statContent = document.createElement('div');
+                statContent.style.fontSize = '0.85rem';
+                statContent.innerHTML = `
+                    <div>Count: ${values.length}</div>
+                    <div>Avg: ${stats.mean.toFixed(2)}</div>
+                    <div>Min: ${stats.min.toFixed(2)}</div>
+                    <div>Max: ${stats.max.toFixed(2)}</div>
+                `;
+                
+                statGroup.appendChild(statTitle);
+                statGroup.appendChild(statContent);
+                statsContainer.appendChild(statGroup);
+            });
+            
+            card.appendChild(statsContainer);
+            elements.dashboardContainer.appendChild(card);
+        }
+
+        function createBarChart(categoryField) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = `Distribution by ${categoryField}`;
+            
+            cardHeader.appendChild(cardTitle);
+            card.appendChild(cardHeader);
+            
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'chart-container';
+            chartContainer.id = `bar-chart-${categoryField}`;
+            card.appendChild(chartContainer);
+            
+            elements.dashboardContainer.appendChild(card);
+            
+            // Calculate data for the bar chart
+            const categories = {};
+            state.filteredData.forEach(row => {
+                const value = row[categoryField];
+                if (value !== undefined && value !== '') {
+                    categories[value] = (categories[value] || 0) + 1;
+                }
+            });
+            
+            // Sort categories by count
+            const sortedCategories = Object.entries(categories)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, config.maxCategories);
+            
+            // Render the bar chart
+            const maxCount = Math.max(...sortedCategories.map(([_, count]) => count));
+            const barHeight = 30;
+            const chartHeight = sortedCategories.length * (barHeight + 10) + 30;
+            
+            chartContainer.style.height = `${chartHeight}px`;
+            
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', `0 0 100 ${chartHeight}`);
+            
+            sortedCategories.forEach(([category, count], index) => {
+                const barWidth = (count / maxCount) * 80;
+                const y = index * (barHeight + 10) + 10;
+                
+                // Bar
+                const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                bar.setAttribute('x', '15');
+                bar.setAttribute('y', y);
+                bar.setAttribute('width', barWidth);
+                bar.setAttribute('height', barHeight);
+                bar.setAttribute('fill', config.colorPalette[index % config.colorPalette.length]);
+                bar.setAttribute('rx', '3');
+                
+                // Add tooltip functionality
+                bar.addEventListener('mousemove', (e) => {
+                    showTooltip(e, `${category}: ${count} (${Math.round(count / state.filteredData.length * 100)}%)`);
+                });
+                
+                bar.addEventListener('mouseout', () => {
+                    hideTooltip();
+                });
+                
+                // Category label
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', '10');
+                label.setAttribute('y', y + barHeight / 2 + 5);
+                label.setAttribute('text-anchor', 'end');
+                label.setAttribute('font-size', '8');
+                label.setAttribute('fill', 'var(--text-color)');
+                label.textContent = truncateText(String(category), 10);
+                
+                // Count label
+                const countLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                countLabel.setAttribute('x', barWidth + 20);
+                countLabel.setAttribute('y', y + barHeight / 2 + 5);
+                countLabel.setAttribute('font-size', '8');
+                countLabel.setAttribute('fill', 'var(--text-color)');
+                countLabel.textContent = count;
+                
+                svg.appendChild(bar);
+                svg.appendChild(label);
+                svg.appendChild(countLabel);
+            });
+            
+            chartContainer.appendChild(svg);
+        }
+
+        function createLineChart(numericField) {
+            // Sort data by the value
+            const sortedData = [...state.filteredData]
+                .sort((a, b) => {
+                    const aVal = a[numericField] || 0;
+                    const bVal = b[numericField] || 0;
+                    return aVal - bVal;
+                })
+                .filter(row => row[numericField] !== undefined && !isNaN(row[numericField]));
+            
+            if (sortedData.length < 2) return; // Not enough data
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = `Trend of ${numericField}`;
+            
+            cardHeader.appendChild(cardTitle);
+            card.appendChild(cardHeader);
+            
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'chart-container';
+            chartContainer.id = `line-chart-${numericField}`;
+            card.appendChild(chartContainer);
+            
+            elements.dashboardContainer.appendChild(card);
+            
+            // Create data points
+            const values = sortedData.map(row => row[numericField]);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = max - min;
+            
+            // Sample points if there are too many
+            const maxPoints = 100;
+            const step = Math.max(1, Math.floor(sortedData.length / maxPoints));
+            const sampledData = [];
+            
+            for (let i = 0; i < sortedData.length; i += step) {
+                sampledData.push(sortedData[i]);
+            }
+            
+            // Add the last point if it's not already included
+            if (sampledData.length > 0 && sampledData[sampledData.length - 1] !== sortedData[sortedData.length - 1]) {
+                sampledData.push(sortedData[sortedData.length - 1]);
+            }
+            
+            // Create SVG
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 100 60');
+            
+            // Create axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', '10');
+            xAxis.setAttribute('y1', '50');
+            xAxis.setAttribute('x2', '90');
+            xAxis.setAttribute('y2', '50');
+            xAxis.setAttribute('stroke', 'var(--border-color)');
+            xAxis.setAttribute('stroke-width', '1');
+            
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', '10');
+            yAxis.setAttribute('y1', '10');
+            yAxis.setAttribute('x2', '10');
+            yAxis.setAttribute('y2', '50');
+            yAxis.setAttribute('stroke', 'var(--border-color)');
+            yAxis.setAttribute('stroke-width', '1');
+            
+            svg.appendChild(xAxis);
+            svg.appendChild(yAxis);
+            
+            // Create line path
+            const pathData = sampledData.map((row, index) => {
+                const x = 10 + (index / (sampledData.length - 1)) * 80;
+                const y = 50 - ((row[numericField] - min) / (range || 1)) * 40;
+                return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+            }).join(' ');
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathData);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', config.colorPalette[0]);
+            path.setAttribute('stroke-width', '2');
+            
+            svg.appendChild(path);
+            
+            // Add points
+            sampledData.forEach((row, index) => {
+                const x = 10 + (index / (sampledData.length - 1)) * 80;
+                const y = 50 - ((row[numericField] - min) / (range || 1)) * 40;
+                
+                const point = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                point.setAttribute('cx', x);
+                point.setAttribute('cy', y);
+                point.setAttribute('r', '1.5');
+                point.setAttribute('fill', config.colorPalette[0]);
+                
+                // Add tooltip functionality
+                point.addEventListener('mousemove', (e) => {
+                    showTooltip(e, `${numericField}: ${row[numericField]}`);
+                });
+                
+                point.addEventListener('mouseout', () => {
+                    hideTooltip();
+                });
+                
+                svg.appendChild(point);
+            });
+            
+            // Add axis labels
+            const minLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            minLabel.setAttribute('x', '5');
+            minLabel.setAttribute('y', '50');
+            minLabel.setAttribute('font-size', '6');
+            minLabel.setAttribute('text-anchor', 'end');
+            minLabel.setAttribute('fill', 'var(--text-color)');
+            minLabel.textContent = min.toFixed(1);
+            
+            const maxLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            maxLabel.setAttribute('x', '5');
+            maxLabel.setAttribute('y', '10');
+            maxLabel.setAttribute('font-size', '6');
+            maxLabel.setAttribute('text-anchor', 'end');
+            maxLabel.setAttribute('fill', 'var(--text-color)');
+            maxLabel.textContent = max.toFixed(1);
+            
+            svg.appendChild(minLabel);
+            svg.appendChild(maxLabel);
+            
+            chartContainer.appendChild(svg);
+        }
+
+        function createPieChart(categoryField) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = `Proportion by ${categoryField}`;
+            
+            cardHeader.appendChild(cardTitle);
+            card.appendChild(cardHeader);
+            
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'chart-container';
+            chartContainer.id = `pie-chart-${categoryField}`;
+            card.appendChild(chartContainer);
+            
+            elements.dashboardContainer.appendChild(card);
+            
+            // Calculate data for the pie chart
+            const categories = {};
+            state.filteredData.forEach(row => {
+                const value = row[categoryField];
+                if (value !== undefined && value !== '') {
+                    categories[value] = (categories[value] || 0) + 1;
+                }
+            });
+            
+            // Sort categories by count and limit to max categories
+            const sortedCategories = Object.entries(categories)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6);
+            
+            const total = sortedCategories.reduce((sum, [_, count]) => sum + count, 0);
+            
+            // Calculate angles for pie slices
+            let currentAngle = 0;
+            const slices = sortedCategories.map(([category, count], index) => {
+                const percentage = count / total;
+                const startAngle = currentAngle;
+                const angleSize = percentage * 2 * Math.PI;
+                const endAngle = startAngle + angleSize;
+                currentAngle = endAngle;
+                
+                return {
+                    category,
+                    count,
+                    percentage,
+                    startAngle,
+                    endAngle,
+                    color: config.colorPalette[index % config.colorPalette.length]
+                };
+            });
+            
+            // Create SVG
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 100 100');
+            
+            // Create pie
+            const radius = 30;
+            const centerX = 50;
+            const centerY = 40;
+            
+            slices.forEach(slice => {
+                // Create pie slice
+                const startX = centerX + radius * Math.cos(slice.startAngle - Math.PI / 2);
+                const startY = centerY + radius * Math.sin(slice.startAngle - Math.PI / 2);
+                const endX = centerX + radius * Math.cos(slice.endAngle - Math.PI / 2);
+                const endY = centerY + radius * Math.sin(slice.endAngle - Math.PI / 2);
+                
+                const largeArcFlag = slice.percentage > 0.5 ? 1 : 0;
+                
+                const pathData = [
+                    `M ${centerX} ${centerY}`,
+                    `L ${startX} ${startY}`,
+                    `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+                    'Z'
+                ].join(' ');
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', slice.color);
+                
+                // Add tooltip functionality
+                path.addEventListener('mousemove', (e) => {
+                    showTooltip(e, `${slice.category}: ${slice.count} (${Math.round(slice.percentage * 100)}%)`);
+                });
+                
+                path.addEventListener('mouseout', () => {
+                    hideTooltip();
+                });
+                
+                svg.appendChild(path);
+            });
+            
+            // Create legend
+            slices.forEach((slice, index) => {
+                const y = 75 + index * 5;
+                
+                // Color box
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', '10');
+                rect.setAttribute('y', y - 3);
+                rect.setAttribute('width', '4');
+                rect.setAttribute('height', '4');
+                rect.setAttribute('fill', slice.color);
+                
+                // Label
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', '18');
+                label.setAttribute('y', y);
+                label.setAttribute('font-size', '4');
+                label.setAttribute('fill', 'var(--text-color)');
+                label.textContent = `${truncateText(String(slice.category), 15)} (${Math.round(slice.percentage * 100)}%)`;
+                
+                svg.appendChild(rect);
+                svg.appendChild(label);
+            });
+            
+            chartContainer.appendChild(svg);
+        }
+
+        function createCorrelationMatrix(fields) {
+            if (fields.length < 2) return;
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.gridColumn = 'span 2';
+            
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            
+            const cardTitle = document.createElement('div');
+            cardTitle.className = 'card-title';
+            cardTitle.textContent = 'Correlation Matrix';
+            
+            cardHeader.appendChild(cardTitle);
+            card.appendChild(cardHeader);
+            
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'chart-container';
+            chartContainer.id = 'correlation-matrix';
+            chartContainer.style.height = '300px';
+            card.appendChild(chartContainer);
+            
+            elements.dashboardContainer.appendChild(card);
+            
+            // Calculate correlations
+            const correlations = [];
+            
+            for (let i = 0; i < fields.length; i++) {
+                const field1 = fields[i];
+                correlations[i] = [];
+                
+                for (let j = 0; j < fields.length; j++) {
+                    const field2 = fields[j];
+                    
+                    if (i === j) {
+                        correlations[i][j] = 1; // Perfect correlation with self
+                    } else {
+                        correlations[i][j] = calculateCorrelation(field1, field2);
+                    }
+                }
+            }
+            
+            // Create SVG
+            const cellSize = Math.min(40, 200 / fields.length);
+            const padding = 60;
+            const chartWidth = cellSize * fields.length + padding;
+            const chartHeight = cellSize * fields.length + padding;
+            
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', `0 0 ${chartWidth} ${chartHeight}`);
+            
+            // Add field labels
+            fields.forEach((field, i) => {
+                // X-axis labels
+                const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                xLabel.setAttribute('x', padding + i * cellSize + cellSize / 2);
+                xLabel.setAttribute('y', padding - 10);
+                xLabel.setAttribute('font-size', Math.min(10, cellSize / 2));
+                xLabel.setAttribute('text-anchor', 'middle');
+                xLabel.setAttribute('transform', `rotate(-45, ${padding + i * cellSize + cellSize / 2}, ${padding - 10})`);
+                xLabel.setAttribute('fill', 'var(--text-color)');
+                xLabel.textContent = truncateText(field, 12);
+                
+                // Y-axis labels
+                const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                yLabel.setAttribute('x', padding - 10);
+                yLabel.setAttribute('y', padding + i * cellSize + cellSize / 2);
+                yLabel.setAttribute('font-size', Math.min(10, cellSize / 2));
+                yLabel.setAttribute('text-anchor', 'end');
+                yLabel.setAttribute('dominant-baseline', 'middle');
+                yLabel.setAttribute('fill', 'var(--text-color)');
+                yLabel.textContent = truncateText(field, 12);
+                
+                svg.appendChild(xLabel);
+                svg.appendChild(yLabel);
+            });
+            
+            // Add correlation cells
+            for (let i = 0; i < fields.length; i++) {
+                for (let j = 0; j < fields.length; j++) {
+                    const correlation = correlations[i][j];
+                    const color = getCorrelationColor(correlation);
+                    
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', padding + j * cellSize);
+                    rect.setAttribute('y', padding + i * cellSize);
+                    rect.setAttribute('width', cellSize);
+                    rect.setAttribute('height', cellSize);
+                    rect.setAttribute('fill', color);
+                    
+                    // Add tooltip functionality
+                    rect.addEventListener('mousemove', (e) => {
+                        showTooltip(e, `${fields[i]} vs ${fields[j]}: ${correlation.toFixed(2)}`);
+                    });
+                    
+                    rect.addEventListener('mouseout', () => {
+                        hideTooltip();
+                    });
+                    
+                    // Add correlation text
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', padding + j * cellSize + cellSize / 2);
+                    text.setAttribute('y', padding + i * cellSize + cellSize / 2);
+                    text.setAttribute('font-size', Math.min(10, cellSize / 3));
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('dominant-baseline', 'middle');
+                    text.setAttribute('fill', Math.abs(correlation) > 0.5 ? 'white' : 'black');
+                    text.textContent = correlation.toFixed(2);
+                    
+                    svg.appendChild(rect);
+                    svg.appendChild(text);
+                }
+            }
+            
+            chartContainer.appendChild(svg);
+        }
+
+        function generateTable() {
+            // Clear previous table content
+            const thead = elements.dataTable.querySelector('thead tr');
+            const tbody = elements.dataTable.querySelector('tbody');
+            
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            // Generate table headers
+            state.columns.forEach(column => {
+                const th = document.createElement('th');
+                th.textContent = column.name;
+                thead.appendChild(th);
+            });
+            
+            // Update pagination info
+            updatePagination();
+            
+            // Populate table with data
+            renderTableRows();
+        }
+
+        function renderTableRows() {
+            const tbody = elements.dataTable.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            const start = state.currentPage * config.pageSize;
+            const end = Math.min(start + config.pageSize, state.filteredData.length);
+            
+            for (let i = start; i < end; i++) {
+                const row = state.filteredData[i];
+                const tr = document.createElement('tr');
+                
+                state.columns.forEach(column => {
+                    const td = document.createElement('td');
+                    const value = row[column.name];
+                    
+                    if (typeof value === 'number') {
+                        td.textContent = value.toLocaleString(undefined, { 
+                            maximumFractionDigits: 2 
+                        });
+                        td.style.textAlign = 'right';
+                    } else {
+                        td.textContent = value !== undefined ? value : '';
+                    }
+                    
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+            }
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(state.filteredData.length / config.pageSize);
+            const start = state.currentPage * config.pageSize + 1;
+            const end = Math.min((state.currentPage + 1) * config.pageSize, state.filteredData.length);
+            
+            elements.startRow.textContent = state.filteredData.length > 0 ? start : 0;
+            elements.endRow.textContent = end;
+            elements.totalRows.textContent = state.filteredData.length;
+            
+            elements.prevPage.disabled = state.currentPage === 0;
+            elements.nextPage.disabled = state.currentPage >= totalPages - 1 || state.filteredData.length === 0;
+        }
+
+        function setupEventListeners() {
+            // Filter buttons
+            elements.applyFilters.addEventListener('click', applyFilters);
+            elements.resetFilters.addEventListener('click', resetFilters);
+            
+            // Pagination buttons
+            elements.prevPage.addEventListener('click', () => {
+                if (state.currentPage > 0) {
+                    state.currentPage--;
+                    renderTableRows();
+                    updatePagination();
+                }
+            });
+            
+            elements.nextPage.addEventListener('click', () => {
+                const totalPages = Math.ceil(state.filteredData.length / config.pageSize);
+                if (state.currentPage < totalPages - 1) {
+                    state.currentPage++;
+                    renderTableRows();
+                    updatePagination();
+                }
+            });
+        }
+
+        function applyFilters() {
+            const filters = {};
+            
+            state.columns.forEach(column => {
+                if (column.type === 'categorical') {
+                    const select = document.getElementById(`filter-${column.name}`);
+                    if (select && select.value) {
+                        filters[column.name] = select.value;
+                    }
+                } else if (column.type === 'numeric') {
+                    const minInput = document.getElementById(`filter-${column.name}-min`);
+                    const maxInput = document.getElementById(`filter-${column.name}-max`);
+                    
+                    if (minInput && minInput.value !== '') {
+                        filters[`${column.name}_min`] = parseFloat(minInput.value);
+                    }
+                    
+                    if (maxInput && maxInput.value !== '') {
+                        filters[`${column.name}_max`] = parseFloat(maxInput.value);
+                    }
+                }
+            });
+            
+            // Apply filters to data
+            state.filters = filters;
+            state.filteredData = state.data.filter(row => {
+                for (const [key, value] of Object.entries(filters)) {
+                    if (key.endsWith('_min')) {
+                        const field = key.replace('_min', '');
+                        if (row[field] < value) return false;
+                    } else if (key.endsWith('_max')) {
+                        const field = key.replace('_max', '');
+                        if (row[field] > value) return false;
+                    } else if (row[key] !== value) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            
+            // Reset current page
+            state.currentPage = 0;
+            
+            // Update UI
+            generateCharts();
+            renderTableRows();
+            updatePagination();
+        }
+
+        function resetFilters() {
+            // Clear all filter inputs
+            state.columns.forEach(column => {
+                if (column.type === 'categorical') {
+                    const select = document.getElementById(`filter-${column.name}`);
+                    if (select) select.value = '';
+                } else if (column.type === 'numeric') {
+                    const minInput = document.getElementById(`filter-${column.name}-min`);
+                    const maxInput = document.getElementById(`filter-${column.name}-max`);
+                    
+                    if (minInput) minInput.value = '';
+                    if (maxInput) maxInput.value = '';
+                }
+            });
+            
+            // Reset filtered data to all data
+            state.filters = {};
+            state.filteredData = [...state.data];
+            state.currentPage = 0;
+            
+            // Update UI
+            generateCharts();
+            renderTableRows();
+            updatePagination();
+        }
+
+        // Utility functions
+        function calculateStats(values) {
+            const sum = values.reduce((acc, val) => acc + val, 0);
+            const mean = sum / values.length;
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            
+            return { sum, mean, min, max };
+        }
+
+        function calculateCorrelation(field1, field2) {
+            const pairs = state.filteredData
+                .map(row => [row[field1], row[field2]])
+                .filter(([a, b]) => !isNaN(a) && !isNaN(b));
+            
+            if (pairs.length < 2) return 0;
+            
+            const n = pairs.length;
+            
+            // Calculate means
+            const mean1 = pairs.reduce((sum, [a]) => sum + a, 0) / n;
+            const mean2 = pairs.reduce((sum, [_, b]) => sum + b, 0) / n;
+            
+            // Calculate variances and covariance
+            let variance1 = 0;
+            let variance2 = 0;
+            let covariance = 0;
+            
+            for (const [a, b] of pairs) {
+                const diff1 = a - mean1;
+                const diff2 = b - mean2;
+                
+                variance1 += diff1 * diff1;
+                variance2 += diff2 * diff2;
+                covariance += diff1 * diff2;
+            }
+            
+            const stdDev1 = Math.sqrt(variance1 / n);
+            const stdDev2 = Math.sqrt(variance2 / n);
+            
+            if (stdDev1 === 0 || stdDev2 === 0) return 0;
+            
+            return covariance / (n * stdDev1 * stdDev2);
+        }
+
+        function getCorrelationColor(correlation) {
+            const value = Math.abs(correlation);
+            
+            if (correlation > 0) {
+                return `rgba(46, 204, 113, ${value})`;
+            } else {
+                return `rgba(231, 76, 60, ${value})`;
+            }
+        }
+
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength - 1) + '…';
+        }
+
+        function showTooltip(event, text) {
+            const tooltip = elements.tooltip;
+            tooltip.textContent = text;
+            tooltip.style.opacity = '1';
+            
+            // Position the tooltip near the mouse but not directly under it
+            const x = event.clientX + 10;
+            const y = event.clientY - 30;
+            
+            // Adjust if tooltip would go off screen
+            const rect = tooltip.getBoundingClientRect();
+            const maxX = window.innerWidth - rect.width - 20;
+            const maxY = window.innerHeight - rect.height - 10;
+            
+            tooltip.style.left = `${Math.min(x, maxX)}px`;
+            tooltip.style.top = `${Math.min(y, maxY)}px`;
+        }
+
+        function hideTooltip() {
+            elements.tooltip.style.opacity = '0';
+        }
+
+        function hideLoaders() {
+            const loaders = document.querySelectorAll('.loader');
+            loaders.forEach(loader => {
+                loader.style.display = 'none';
+            });
+        }
+
+        function showErrorMessage(message) {
+            elements.filterContainer.innerHTML = `<div style="color: var(--danger-color);">${message}</div>`;
+            elements.dashboardContainer.innerHTML = `<div style="color: var(--danger-color);">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
