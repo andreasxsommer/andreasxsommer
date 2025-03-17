@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Data Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: var(--primary-color);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .user-info {
+            background-color: var(--dark-color);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: var(--dark-color);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stats-card {
+            grid-column: span 3;
+            text-align: center;
+        }
+        
+        .stats-card .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .stats-card .label {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+            margin-top: 5px;
+        }
+        
+        .chart-card {
+            grid-column: span 6;
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .map-card {
+            grid-column: span 6;
+        }
+        
+        .table-card {
+            grid-column: span 12;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        table th {
+            background-color: var(--light-color);
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        table tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .search-filter input, .search-filter select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex-grow: 1;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        
+        .pagination button {
+            padding: 8px 15px;
+            background-color: var(--light-color);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .pagination button:hover, .pagination button.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .error-container {
+            background-color: #fff4f4;
+            border-left: 4px solid var(--accent-color);
+            padding: 20px;
+            margin: 20px 0;
+            color: var(--accent-color);
+        }
+        
+        @media (max-width: 992px) {
+            .stats-card {
+                grid-column: span 6;
+            }
+            
+            // Last page button (if not visible)
+            if (endPage < totalPages) {
+                // Ellipsis if needed
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.margin = '0 5px';
+                    pagination.appendChild(ellipsis);
+                }
+                
+                const lastButton = document.createElement('button');
+                lastButton.textContent = totalPages;
+                lastButton.addEventListener('click', () => {
+                    state.currentPage = totalPages;
+                    renderTable();
+                });
+                pagination.appendChild(lastButton);
+            }
+            
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '→';
+            nextButton.disabled = state.currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (state.currentPage < totalPages) {
+                    state.currentPage++;
+                    renderTable();
+                }
+            });
+            pagination.appendChild(nextButton);
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Search input
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', function() {
+                state.searchTerm = this.value.trim();
+                state.currentPage = 1; // Reset to first page
+                applyFilters();
+                renderTable();
+            });
+            
+            // Country filter
+            const countryFilter = document.getElementById('country-filter');
+            countryFilter.addEventListener('change', function() {
+                state.countryFilter = this.value;
+                state.currentPage = 1; // Reset to first page
+                applyFilters();
+                renderTable();
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            const errorMessage = document.getElementById('error-message');
+            
+            errorMessage.textContent = message;
+            errorContainer.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
+            
+            .chart-card, .map-card {
+                grid-column: span 12;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-card {
+                grid-column: span 12;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Customer Data Dashboard</h1>
+            <div class="user-info" id="user-info">
+                Loading user info...
+            </div>
+        </header>
+        
+        <div id="loading" class="loading">
+            <p>Loading your data...</p>
+        </div>
+        
+        <div id="error-container" class="error-container" style="display: none;">
+            <h3>Error</h3>
+            <p id="error-message"></p>
+        </div>
+        
+        <div id="dashboard" class="dashboard" style="display: none;">
+            <!-- Stats Cards -->
+            <div class="card stats-card">
+                <h2>Total Customers</h2>
+                <div class="value" id="total-customers">0</div>
+                <div class="label">Registered users</div>
+            </div>
+            
+            <div class="card stats-card">
+                <h2>Countries</h2>
+                <div class="value" id="total-countries">0</div>
+                <div class="label">Global reach</div>
+            </div>
+            
+            <div class="card stats-card">
+                <h2>Companies</h2>
+                <div class="value" id="total-companies">0</div>
+                <div class="label">Business clients</div>
+            </div>
+            
+            <div class="card stats-card">
+                <h2>New This Month</h2>
+                <div class="value" id="new-customers">0</div>
+                <div class="label">Recent subscriptions</div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="card chart-card">
+                <h2>Subscriptions Over Time</h2>
+                <div class="chart-container">
+                    <canvas id="subscription-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card chart-card">
+                <h2>Top Countries</h2>
+                <div class="chart-container">
+                    <canvas id="countries-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Data Table -->
+            <div class="card table-card">
+                <h2>Customer Data</h2>
+                <div class="search-filter">
+                    <input type="text" id="search-input" placeholder="Search customers...">
+                    <select id="country-filter">
+                        <option value="">All Countries</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="customers-table">
+                        <thead>
+                            <tr>
+                                <th>Customer ID</th>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Country</th>
+                                <th>Email</th>
+                                <th>Subscription Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Table rows will be dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination">
+                    <!-- Pagination buttons will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            itemsPerPage: 10,
+            colorPalette: [
+                '#3498db', '#2ecc71', '#9b59b6', '#e74c3c', '#f1c40f', 
+                '#1abc9c', '#34495e', '#16a085', '#27ae60', '#2980b9'
+            ],
+            // CSV file path - update this to match your intranet structure
+            csvFilePath: '/personal/{username}/data.csv'
+        };
+
+        // Application state
+        const state = {
+            userEmail: '',
+            username: '',
+            rawData: [],
+            filteredData: [],
+            currentPage: 1,
+            countryFilter: '',
+            searchTerm: '',
+            loading: true,
+            error: null
+        };
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Get current user from SharePoint context
+                await getCurrentUser();
+                
+                // Load CSV data
+                await loadCsvData();
+                
+                // Process and render data
+                processData();
+                renderDashboard();
+                
+                // Set up event listeners
+                setupEventListeners();
+                
+            } catch (error) {
+                showError(error.message || 'An unknown error occurred');
+                console.error('Dashboard initialization error:', error);
+            }
+        });
+
+        // Get current user info from SharePoint context
+        async function getCurrentUser() {
+            try {
+                // Option 1: Use SharePoint PnP to get current user
+                // If you have the SharePoint PnP library loaded
+                if (typeof _spPageContextInfo !== 'undefined') {
+                    // SharePoint classic pages
+                    state.userEmail = _spPageContextInfo.userEmail || _spPageContextInfo.userPrincipalName;
+                    state.username = _spPageContextInfo.userLoginName.split('\\').pop().split('@')[0];
+                    document.getElementById('user-info').textContent = `User: ${state.userEmail}`;
+                    return;
+                }
+                
+                // Option 2: For modern SharePoint pages
+                if (typeof SP !== 'undefined' && SP.ClientContext) {
+                    return new Promise((resolve, reject) => {
+                        const clientContext = new SP.ClientContext.get_current();
+                        const web = clientContext.get_web();
+                        const currentUser = web.get_currentUser();
+                        
+                        clientContext.load(currentUser);
+                        clientContext.executeQueryAsync(
+                            function() {
+                                state.userEmail = currentUser.get_email();
+                                state.username = currentUser.get_loginName().split('\\').pop().split('@')[0];
+                                document.getElementById('user-info').textContent = `User: ${state.userEmail}`;
+                                resolve();
+                            },
+                            function(sender, args) {
+                                reject(new Error('Failed to get current user: ' + args.get_message()));
+                            }
+                        );
+                    });
+                }
+                
+                // Option 3: SharePoint REST API
+                const response = await fetch("/_api/web/currentuser", {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json;odata=verbose"
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to get user: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                state.userEmail = data.d.Email;
+                state.username = data.d.LoginName.split('\\').pop().split('@')[0];
+                document.getElementById('user-info').textContent = `User: ${state.userEmail}`;
+                
+            } catch (error) {
+                console.warn('Could not get user from SharePoint context:', error);
+                
+                // Fallback for testing outside SharePoint
+                state.userEmail = 'current.user@company.com';
+                state.username = 'current.user';
+                document.getElementById('user-info').textContent = `User: ${state.userEmail} (Test Mode)`;
+            }
+        }
+
+        // Load CSV data from user's OneDrive folder in SharePoint
+        async function loadCsvData() {
+            try {
+                // Replace {username} placeholder with actual username
+                const filePath = config.csvFilePath.replace('{username}', state.username);
+                
+                // Use SharePoint REST API to get file content
+                const response = await fetch(`/_api/web/getfilebyserverrelativeurl('${filePath}')/$value`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "text/plain"
+                    }
+                });
+                
+                if (!response.ok) {
+                    // If file not found, show clear message
+                    if (response.status === 404) {
+                        throw new Error(`Data file not found at ${filePath}. Please ensure the file exists in your OneDrive.`);
+                    }
+                    throw new Error(`Failed to get file: ${response.status} ${response.statusText}`);
+                }
+                
+                // Get CSV content
+                const csvData = await response.text();
+                
+                // Parse CSV data using PapaParse
+                Papa.parse(csvData, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if (results.errors && results.errors.length > 0) {
+                            throw new Error('CSV parsing errors: ' + results.errors.map(e => e.message).join(', '));
+                        }
+                        
+                        state.rawData = results.data;
+                        state.loading = false;
+                    },
+                    error: function(error) {
+                        throw new Error('Failed to parse CSV: ' + error.message);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Load CSV error:', error);
+                
+                // For testing or demo purposes, use sample data if requested
+                if (confirm('Could not load your data file. Would you like to use sample data for demonstration?')) {
+                    useSampleData();
+                    return;
+                }
+                
+                throw error;
+            }
+        }
+        
+        // Use sample data as fallback
+        function useSampleData() {
+            const sampleData = generateSampleData();
+            
+            Papa.parse(sampleData, {
+                header: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    state.rawData = results.data;
+                    state.loading = false;
+                }
+            });
+        }
+        
+        // Generate sample data matching the CSV structure
+        function generateSampleData() {
+            const headers = 'Index,Customer Id,First Name,Last Name,Company,City,Country,Phone 1,Phone 2,Email,Subscription Date,Website\n';
+            
+            // Generate 100 sample rows
+            let rows = [];
+            const countries = ['USA', 'UK', 'Germany', 'France', 'Canada', 'Australia', 'Japan', 'Brazil', 'India', 'Spain'];
+            const cities = ['New York', 'London', 'Berlin', 'Paris', 'Toronto', 'Sydney', 'Tokyo', 'São Paulo', 'Mumbai', 'Madrid'];
+            const companies = ['ABC Corp', 'Tech Solutions', 'Global Industries', 'InnovateCo', 'NextGen Systems', 'SmartTech', 'Future Enterprises', 'Digital Solutions', 'Apex Industries', 'Prime Technologies'];
+            
+            // Generate subscription dates spanning last 2 years
+            const today = new Date();
+            
+            for (let i = 0; i < 100; i++) {
+                const countryIndex = Math.floor(Math.random() * countries.length);
+                const subscriptionDate = new Date(today);
+                subscriptionDate.setDate(today.getDate() - Math.floor(Math.random() * 730)); // Random date in last 2 years
+                
+                const firstName = ['John', 'Jane', 'Michael', 'Emily', 'David', 'Sarah', 'Robert', 'Maria', 'Daniel', 'Laura'][Math.floor(Math.random() * 10)];
+                const lastName = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'][Math.floor(Math.random() * 10)];
+                
+                const row = [
+                    i + 1, // Index
+                    `CUST${100000 + i}`, // Customer Id
+                    firstName, // First Name
+                    lastName, // Last Name
+                    companies[Math.floor(Math.random() * companies.length)], // Company
+                    cities[countryIndex], // City - matching country
+                    countries[countryIndex], // Country
+                    `+1-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`, // Phone 1
+                    Math.random() > 0.5 ? `+1-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}` : '', // Phone 2 (sometimes empty)
+                    `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`, // Email
+                    formatDate(subscriptionDate), // Subscription Date
+                    Math.random() > 0.3 ? `https://www.${firstName.toLowerCase() + lastName.toLowerCase()}.com` : '' // Website (sometimes empty)
+                ];
+                
+                rows.push(row.join(','));
+            }
+            
+            return headers + rows.join('\n');
+        }
+
+        // Process the data
+        function processData() {
+            applyFilters();
+        }
+
+        // Apply filters to the data
+        function applyFilters() {
+            state.filteredData = state.rawData.filter(item => {
+                // Apply country filter
+                if (state.countryFilter && item.Country !== state.countryFilter) {
+                    return false;
+                }
+                
+                // Apply search term
+                if (state.searchTerm) {
+                    const searchLower = state.searchTerm.toLowerCase();
+                    return (
+                        (item['Customer Id'] && item['Customer Id'].toString().toLowerCase().includes(searchLower)) ||
+                        (item['First Name'] && item['First Name'].toLowerCase().includes(searchLower)) ||
+                        (item['Last Name'] && item['Last Name'].toLowerCase().includes(searchLower)) ||
+                        (item['Company'] && item['Company'].toLowerCase().includes(searchLower)) ||
+                        (item['Email'] && item['Email'].toLowerCase().includes(searchLower))
+                    );
+                }
+                
+                return true;
+            });
+        }
+
+        // Render the dashboard elements
+        function renderDashboard() {
+            if (state.loading) {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('dashboard').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'grid';
+            
+            // Render all dashboard components
+            renderStatistics();
+            renderCharts();
+            renderTable();
+            populateCountryFilter();
+        }
+
+        // Render statistics cards
+        function renderStatistics() {
+            // Total customers
+            document.getElementById('total-customers').textContent = state.rawData.length;
+            
+            // Total countries (unique)
+            const uniqueCountries = new Set(state.rawData.map(item => item.Country));
+            document.getElementById('total-countries').textContent = uniqueCountries.size;
+            
+            // Total companies (unique)
+            const uniqueCompanies = new Set(state.rawData.map(item => item.Company));
+            document.getElementById('total-companies').textContent = uniqueCompanies.size;
+            
+            // New customers this month
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            const newCustomers = state.rawData.filter(item => {
+                if (!item['Subscription Date']) return false;
+                const subscriptionDate = parseDate(item['Subscription Date']);
+                return subscriptionDate >= firstDayOfMonth;
+            });
+            
+            document.getElementById('new-customers').textContent = newCustomers.length;
+        }
+
+        // Parse date from MM/DD/YYYY format
+        function parseDate(dateString) {
+            if (!dateString) return null;
+            
+            // Handle different date formats
+            let parts;
+            if (dateString.includes('/')) {
+                parts = dateString.split('/');
+                return new Date(parts[2], parts[0] - 1, parts[1]);
+            } else if (dateString.includes('-')) {
+                parts = dateString.split('-');
+                return new Date(parts[0], parts[1] - 1, parts[2]);
+            }
+            
+            return new Date(dateString);
+        }
+
+        // Format date as MM/DD/YYYY
+        function formatDate(date) {
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${month}/${day}/${year}`;
+        }
+
+        // Render subscription trend chart
+        function renderSubscriptionChart() {
+            const ctx = document.getElementById('subscription-chart').getContext('2d');
+            
+            // Process subscription data by month
+            const subscriptionsByMonth = {};
+            
+            state.rawData.forEach(item => {
+                if (!item['Subscription Date']) return;
+                
+                const date = parseDate(item['Subscription Date']);
+                if (!date) return;
+                
+                const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                if (!subscriptionsByMonth[monthYear]) {
+                    subscriptionsByMonth[monthYear] = 0;
+                }
+                
+                subscriptionsByMonth[monthYear]++;
+            });
+            
+            // Sort months chronologically
+            const sortedMonths = Object.keys(subscriptionsByMonth).sort();
+            
+            // Prepare chart data
+            const chartData = {
+                labels: sortedMonths.map(formatMonthYear),
+                datasets: [{
+                    label: 'New Subscriptions',
+                    data: sortedMonths.map(month => subscriptionsByMonth[month]),
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            };
+            
+            // Create chart
+            new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Format month-year for chart labels
+        function formatMonthYear(monthYear) {
+            const [year, month] = monthYear.split('-');
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${monthNames[parseInt(month) - 1]} ${year}`;
+        }
+
+        // Render all charts
+        function renderCharts() {
+            renderSubscriptionChart();
+            renderCountriesChart();
+        }
+
+        // Render countries chart
+        function renderCountriesChart() {
+            const ctx = document.getElementById('countries-chart').getContext('2d');
+            
+            // Count customers by country
+            const countryCounts = {};
+            
+            state.rawData.forEach(item => {
+                if (!item.Country) return;
+                
+                if (!countryCounts[item.Country]) {
+                    countryCounts[item.Country] = 0;
+                }
+                
+                countryCounts[item.Country]++;
+            });
+            
+            // Sort countries by count (descending)
+            const sortedCountries = Object.keys(countryCounts)
+                .sort((a, b) => countryCounts[b] - countryCounts[a])
+                .slice(0, 10); // Top 10 countries
+            
+            // Prepare chart data
+            const chartData = {
+                labels: sortedCountries,
+                datasets: [{
+                    label: 'Customers by Country',
+                    data: sortedCountries.map(country => countryCounts[country]),
+                    backgroundColor: config.colorPalette,
+                    borderWidth: 1
+                }]
+            };
+            
+            // Create chart
+            new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // HTML sanitizer function to prevent XSS attacks
+        function sanitizeHTML(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Populate country filter dropdown
+        function populateCountryFilter() {
+            const countryFilter = document.getElementById('country-filter');
+            const uniqueCountries = [...new Set(state.rawData.map(item => item.Country))].filter(Boolean).sort();
+            
+            // Clear existing options (except the "All Countries" option)
+            while (countryFilter.options.length > 1) {
+                countryFilter.remove(1);
+            }
+            
+            // Add country options
+            uniqueCountries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countryFilter.appendChild(option);
+            });
+        }
+
+        // Render customer data table
+        function renderTable() {
+            const tableBody = document.getElementById('customers-table').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(state.filteredData.length / config.itemsPerPage);
+            const startIndex = (state.currentPage - 1) * config.itemsPerPage;
+            const endIndex = Math.min(startIndex + config.itemsPerPage, state.filteredData.length);
+            
+            // Display current page data
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = state.filteredData[i];
+                
+                const row = document.createElement('tr');
+                
+                // Add table cells with sanitized HTML to prevent XSS attacks
+                row.innerHTML = `
+                    <td>${sanitizeHTML(item['Customer Id'] || '')}</td>
+                    <td>${sanitizeHTML(item['First Name'] || '')} ${sanitizeHTML(item['Last Name'] || '')}</td>
+                    <td>${sanitizeHTML(item['Company'] || '')}</td>
+                    <td>${sanitizeHTML(item['Country'] || '')}</td>
+                    <td>${sanitizeHTML(item['Email'] || '')}</td>
+                    <td>${sanitizeHTML(item['Subscription Date'] || '')}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            }
+            
+            // Update pagination
+            renderPagination(totalPages);
+        }
+
+        // Render pagination controls
+        function renderPagination(totalPages) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            // Don't show pagination if there's only one page
+            if (totalPages <= 1) return;
+            
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '←';
+            prevButton.disabled = state.currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (state.currentPage > 1) {
+                    state.currentPage--;
+                    renderTable();
+                }
+            });
+            pagination.appendChild(prevButton);
+            
+            // Page buttons
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, state.currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            // Adjust if we're near the end
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            // First page button (if not visible)
+            if (startPage > 1) {
+                const firstButton = document.createElement('button');
+                firstButton.textContent = '1';
+                firstButton.addEventListener('click', () => {
+                    state.currentPage = 1;
+                    renderTable();
+                });
+                pagination.appendChild(firstButton);
+                
+                // Ellipsis if needed
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.margin = '0 5px';
+                    pagination.appendChild(ellipsis);
+                }
+            }
+            
+            // Page buttons
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.toggle('active', i === state.currentPage);
+                pageButton.addEventListener('click', () => {
+                    state.currentPage = i;
+                    renderTable();
+                });
+                pagination.appendChild(pageButton);
+            }
